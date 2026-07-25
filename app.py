@@ -10,7 +10,18 @@ st.set_page_config(page_title="Vimal's VoiceAI", page_icon=":microphone:", layou
 
 load_dotenv()
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+try:
+    if "GROQ_API_KEY" in st.secrets:
+        api_key = st.secrets["GROQ_API_KEY"]
+    else:
+        api_key = os.getenv("GROQ_API_KEY")
+except Exception:
+    api_key = os.getenv("GROQ_API_KEY")
+
+if api_key:
+    client = Groq(api_key=api_key)
+else:
+    client = None
 
 if "conversation_history" not in st.session_state:
     st.session_state.conversation_history = []
@@ -67,6 +78,10 @@ audio_value = st.audio_input("Record your voice:", key="voice_input")
 
 if audio_value is not None:
     st.audio(audio_value)
+
+    if client is None:
+        st.error("Missing GROQ API key. Please add it in Streamlit secrets or your .env file.")
+        st.stop()
 
     if "last_processed_audio" not in st.session_state:
         st.session_state.last_processed_audio = None
